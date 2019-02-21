@@ -1,0 +1,5 @@
+﻿  CentralCache.cpp
+  ThreadCache.cpp
+e:\作业\c++\内存池\内存池\threadcache.cpp(43): error C2039: “ReleaseListToSpans”: 不是“CentralCache”的成员
+  e:\作业\c++\内存池\内存池\centralcache.h(5): note: 参见“CentralCache”的声明
+  正在生成代码...
