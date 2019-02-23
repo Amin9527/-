@@ -3,6 +3,8 @@
 #include<windows.h>
 #include<assert.h>
 #include<map>
+#include<mutex>
+#include<vector>
 
 #ifdef _WIN32
 #include<windows.h>
@@ -69,6 +71,11 @@ public:
 		return _size;
 	}
 
+	void SetMaxSize(size_t maxsize)
+	{
+		_maxsize = maxsize;
+	}
+
 	size_t MaxSize()
 	{
 		return _maxsize;
@@ -76,7 +83,8 @@ public:
 private:
 	void *_list = nullptr;
 	size_t _size = 0;    //自由链表下挂载对象的个数
-	size_t _maxsize = 9; //自由链表下挂对象的最大个数
+	//水位线，就是当自由链表下面的内存块对象的个数大于或者等于这个数时，才进行释放
+	size_t _maxsize = 1; //自由链表下挂对象的最大个数
 };
 
 
@@ -157,6 +165,8 @@ public:
 	{
 
 	}
+
+	std::mutex _mtx;
 private:
 	Span* _head = nullptr;
 };

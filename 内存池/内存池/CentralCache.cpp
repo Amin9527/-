@@ -46,6 +46,9 @@ size_t CentralCache::FetchRangeObj(void*& start, void*& end, size_t num, size_t 
 	size_t index = ClassSize::Index(bytes);//找到该大小内存对应自由链表的位置标识
 	SpanList* spanlist = &_spanlist[index];//找到该大小内存对应自由链表的位置
 
+	//对当前桶进行加锁
+	std::unique_lock<std::mutex> lock(spanlist->_mtx);
+
 	//获取一个span
 	Span* span = GetOneSpan(spanlist, bytes);
 	void* cur = span->_objlist;
@@ -73,12 +76,15 @@ void CentralCache::ReleaseListToSpan(void* start, size_t bytes)
 	size_t index = ClassSize::Index(bytes);
 	SpanList* spanlist = &_spanlist[index];
 
+	//加锁
+	std::unique_lock<std::mutex> lock(spanlist->_mtx);
+
 	while (start)
 	{
 		void* next = NEXT_OBJ(start);
 		Span* span = PageCache::GetInstance()->MapObjectToSpan(start);
 		NEXT_OBJ(start) = span->_objlist;
-		NEXT_OBJ(span->_objlist) = start;
+		span->_objlist = start;
 
 		//usecount==0 表示span切出的对象全部收回
 		//释放span回到PageCache进行合并
@@ -86,10 +92,10 @@ void CentralCache::ReleaseListToSpan(void* start, size_t bytes)
 		{
 			spanlist->Erase(span); //将span从spanlist链表去掉
 
-			span->_next == nullptr;
-			span->_prev == nullptr;
-			span->_objsize == 0;
-			span->_objlist == nullptr;
+			span->_next = nullptr;
+			span->_prev = nullptr;
+			span->_objsize = 0;
+			span->_objlist = nullptr;
 
 			PageCache::GetInstance()->ReleaseSpanToPageCache(span);
 		}

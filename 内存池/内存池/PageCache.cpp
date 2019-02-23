@@ -59,6 +59,7 @@ Span* PageCache::MapObjectToSpan(void* start)
 //回收span，合并相邻span
 void PageCache::ReleaseSpanToPageCache(Span* span)
 {
+	//向前合并
 	auto previt = _id_span_map.find(span->_pageid - 1);//找span前一页的id是否在map中
 	while (previt != _id_span_map.end())
 	{
@@ -78,15 +79,16 @@ void PageCache::ReleaseSpanToPageCache(Span* span)
 		previt = _id_span_map.find(span->_pageid - 1);
 	}
 
-	auto nextit = _id_span_map.find(span->_pageid + span->_npage);
+	//向后合并
+	auto nextit = _id_span_map.find(span->_pageid + span->_npage);//找span后面span的id是否在map中
 	while (nextit != _id_span_map.end())
 	{
-		Span* nextspan = nextit->second;
+		Span* nextspan = nextit->second;//取出后面的pageid映射的span
 
-		if (nextspan->_usecount != 0)
+		if (nextspan->_usecount != 0)//如果后面pageid映射的span没有全部归还,跳出，不合并
 			break;
 
-		if ((nextspan->_npage + span->_npage) > (NPAGES - 1))
+		if ((nextspan->_npage + span->_npage) > (NPAGES - 1))//如果合并的页数超过了最大页，跳出，不合并
 			break;
 
 		_pagelist[nextspan->_npage].Erase(nextspan);
@@ -96,9 +98,10 @@ void PageCache::ReleaseSpanToPageCache(Span* span)
 		nextit = _id_span_map.find(span->_pageid + span->_npage);
 	}
 
+	//将合并成的新span映射到map中
 	for (size_t i = 0; i < span->_npage; ++i)
 	{
 		_id_span_map[span->_pageid + i] = span;
 	}
-	_pagelist[span->_npage].PushFront(span);
+	_pagelist[span->_npage].PushFront(span);//将合并成的新span插入到pagelist中
 }

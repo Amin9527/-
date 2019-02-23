@@ -13,6 +13,12 @@ void* ThreadCache::FetchFromCentralCache(size_t index, size_t bytes)
 		freelist->PushRange(NEXT_OBJ(start), end, fetchnum - 1);
 	}
 
+	if (num_to_move == freelist->MaxSize())
+	{
+		int tmp = num_to_move;
+		freelist->SetMaxSize(++tmp);
+	}
+
 	return start;
 }
 
@@ -41,4 +47,21 @@ void ThreadCache::ListTooLong(FreeList* freelist, size_t bytes)
 {
 	void* start = freelist->Clear();
 	CentralCache::GetInstance()->ReleaseListToSpan(start, bytes);
+}
+
+//释放内存（回收）
+void ThreadCache::Deallocate(void* ptr, size_t bytes)
+{
+	assert(bytes <= MAXBYTES);
+	bytes = ClassSize::Roundup(bytes);
+	size_t index = ClassSize::Index(bytes);
+	FreeList* freelist = &_freelist[index];
+	freelist->push(ptr);
+
+	//当自由链表中的对象个数超过从CentralCache一次性获取的对象个数时
+	//开始回收对象到CentralCache
+	if (freelist->Size() >= freelist->MaxSize())
+	{
+		ListTooLong(freelist, bytes);
+	}
 }
