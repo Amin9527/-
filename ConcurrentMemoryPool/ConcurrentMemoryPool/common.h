@@ -84,7 +84,7 @@ private:
 	void *_list = nullptr;
 	size_t _size = 0;    //自由链表下挂载对象的个数
 	//水位线，就是当自由链表下面的内存块对象的个数大于或者等于这个数时，才进行释放
-	size_t _maxsize = 1; //自由链表下挂对象的最大个数
+	size_t _maxsize = 10; //自由链表下挂对象的最大个数
 };
 
 

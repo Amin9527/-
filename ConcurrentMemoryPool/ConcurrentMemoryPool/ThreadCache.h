@@ -19,3 +19,6 @@ public:
 private:
 	FreeList _freelist[NLISTS];
 };
+
+//tls
+//static _declspec(thread) ThreadCache* tls_threadcache = nullptr;

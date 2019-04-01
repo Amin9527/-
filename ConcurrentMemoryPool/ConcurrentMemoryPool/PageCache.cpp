@@ -5,6 +5,7 @@ PageCache PageCache::_inst;
 //申请一个pagespan中的span
 Span* PageCache::NewSpan(size_t npage)
 {
+
 	if (!_pagelist[npage].Empty())  //如果对应的_pagelist下有span
 	{
 		return _pagelist[npage].PopFront();
